@@ -1,0 +1,4 @@
+---
+
+dotfiles_path:     '/home/{{ user_name }}/.dotfiles'
+dotfiles_git_repo: 'https://github.com/BennyLi/dotfiles'

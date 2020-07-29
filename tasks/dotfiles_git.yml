@@ -1,0 +1,43 @@
+---
+
+- name: Check if dotfiles are present and a git repo
+  stat:
+    path: '{{ dotfiles_path }}/.git'
+  register: dotfiles_git
+  tags:
+    - dotfiles
+
+#####  ---  If dotfiles are not present yet  ---  #####
+- name: Get the dotfiles via https so no ssh foo is going on
+  when: dotfiles_git.stat.isdir is not defined
+  git:
+    update: yes
+    repo: '{{ dotfiles_git_repo | regex_replace("ssh://git@", "https://") }}'
+    dest: '{{ dotfiles_path }}'
+  tags:
+    - dotfiles
+
+- name: Restore dotfiles repo url to configured one
+  when: dotfiles_git.stat.isdir is not defined
+  git_config:
+    repo: '{{ dotfiles_path }}'
+    scope: local
+    name: remote.origin.url
+    value: '{{ dotfiles_git_repo }}'
+  tags:
+    - dotfiles
+#####  ---  END: If dotfiles are not present yet  ---  #####
+
+- name: Update the dotfiles if no local changes are present
+  when: dotfiles_git.stat.isdir is defined
+  git:
+    update: yes
+    repo: '{{ dotfiles_git_repo }}'
+    dest: '{{ dotfiles_path }}'
+  register: command_result
+  failed_when:
+    - command_result.failed
+    - command_result.stdout is defined
+    - "'Local modifications exist in repository' not in command_result.stdout"
+  tags:
+    - dotfiles

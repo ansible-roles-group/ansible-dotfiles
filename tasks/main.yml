@@ -1,0 +1,4 @@
+---
+
+- name: Get your dotfiles
+  import_tasks: dotfiles_git.yml
